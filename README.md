@@ -11,7 +11,7 @@ How to build your ANE with android studio
 2. setting up your build.xml
 
    here is a sample content of build-conf.config
-    -------------------------------------------------------------------------------
+    ```batch
     flex.sdk = path_to_your_AIR_sdk/ascsdk/26.0.0
     bin.ext = .bat
     arr_name =  app-release.aar
@@ -20,19 +20,21 @@ How to build your ANE with android studio
     name = name_your_ane
     DEBUG = false
     EXTENSION_XML = path_to_your_extension_xml_file/extension.xml
-    -------------------------------------------------------------------------------
+    ```
     
     <project name="Air Native Extension Build Scripts" default="android-all">
     <target name="android-all" depends="clean,android,supa_mega_ukulele,swc,package" description="Full build of extension"/>
     
    here is the clean up section. delete the temp directory
+   ```xml
     <target name="clean" description="clean up all">
 		<delete dir="temp/"/>
 	  </target>
+    ```
     
    here is example of your build xml file. this section processes the aar file created by android studio 
    build process. this process extracted .jar and res out from the aar file.
-    --------------------------------------------------------------------------------------
+    ```xml
     <target name="android" description="Build Android Library with debugging disabled">
 		<!-- process arr -->
 		<mkdir dir="temp/aar/"/>
@@ -50,10 +52,10 @@ How to build your ANE with android studio
 		<jar basedir="temp/jar/" destfile="temp/android/peane.jar" />
 		<delete dir="temp/jar"/>
     </target>
-    --------------------------------------------------------------------------------------
+    ```
     
    this section compiles the swc, and process it.
-   -------------------------------------------------------------------------------------------------
+   ```xml
     <!-- Actionscript -->
     <target name="swc" description="Build SWC library">
         <mkdir dir="temp/swc/content/"/>
@@ -77,17 +79,18 @@ How to build your ANE with android studio
         <copy file="temp/swc/content/library.swf" todir="temp/android" overwrite="true"/>
         <copy file="temp/swc/content/library.swf" todir="temp/default" overwrite="true"/>
     </target>
-    -------------------------------------------------------------------------------------------------
+    ```
     
    this section execute the tool for dependencies packing (jar and res)
-    -------------------------------------------------------------------------------
+    ```xml
     <target name="supa_mega_ukulele" description="pack library">
 		<!-- run autopacker -->
 		<exec executable="repacker.exe" failonerror="true" dir="temp/"></exec>
 	  </target>
-    -------------------------------------------------------------------------------
+    ```
     
    finally pack the ANE
+   ```xml
     <target name="package" description="Create the extension package">
 		<property name="TARGET_ANE" value="${name}.ane"/>
 		<property name="SWC_LIB" value="swc/${name}.swc"/>
@@ -101,14 +104,15 @@ How to build your ANE with android studio
     </exec>
     <move file="temp/${name}.ane" todir="../bin"/>
     </target>
+    ```
 
 3. setting up your supaMegaUkulele.ini
-      --------------------------------------------
+      ```batch
       [settings]
       path=path_to_your_android_studio_project
       main_package_name=your_package_name
       airSDKversion=air_sdk_version
-      --------------------------------------------
+      ```
       
 4. build your android arr (see tutorial on point 1)
 5. run your apache ant
