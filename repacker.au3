@@ -10,34 +10,35 @@
 #ce ----------------------------------------------------------------------------
 
 #include <Array.au3>
-#include <File.au3>
 #include <MsgBoxConstants.au3>
+#include <File.au3>
 #include <FileConstants.au3>
 
-; project settings
-$path = IniRead('supaMegaUkulele.ini', 'settings','path','');
-$main_package_name = IniRead('supaMegaUkulele.ini', 'settings','main_package_name','');
-$airSDKversion = IniRead('supaMegaUkulele.ini', 'settings','airSDKversion','');
+; project settings, read on ini file nearby
+$iniFiles = _FileListToArray(@ScriptDir, "*.ini", $FLTA_FILES, True);
+$iniFile = $iniFiles[1];
+
+$path				= IniRead($iniFile, 'settings','path','');
+$ane_package_name 	= IniRead($iniFile, 'settings','ane_package_name','');
+$air_namespace 		= IniRead($iniFile, 'settings','air_namespace','');
+$cache_path			= IniRead($iniFile, 'settings','gradle_cache','');
+
 ConsoleWrite( $path & @CRLF);
-ConsoleWrite( $main_package_name & @CRLF);
-ConsoleWrite( $airSDKversion & @CRLF);
+ConsoleWrite( $ane_package_name & @CRLF);
+ConsoleWrite( $air_namespace & @CRLF);
 
 ; important constants
-$android_arr_dir = "\build_cache\";
 ConsoleWrite(@CRLF);
 ConsoleWrite("+-----------------------------------------------------------------------------------------" & @CRLF);
 ConsoleWrite("|_________________________________________________________________________________________" & @CRLF);
 ConsoleWrite("|____________________________SUPA___MEGA__UKULELE__MEEEEEWWW___MEEEEWWW___________________" & @CRLF);
 ConsoleWrite("|_________________________________________________________________________________________" & @CRLF);
 
+ConsoleWrite("|PROJECT CONFIGURATION FILE : "&$iniFile&@CRLF);
 ConsoleWrite("|PATH : "&$path&@CRLF);
 
-; full exploded arr path
-$full_path = $path & $android_arr_dir;
-ConsoleWrite("|FULL PATH : "&$full_path&@CRLF);
-
 ; CRAWL FOR JARS
-$allJars = _FileListToArrayRec($full_path, "*.jar", $FLTAR_FILES, $FLTAR_RECUR, $FLTAR_SORT, $FLTAR_FULLPATH);
+$allJars = _FileListToArrayRec($cache_path, "*.jar", $FLTAR_FILES, $FLTAR_RECUR, $FLTAR_SORT, $FLTAR_FULLPATH);
 Local $jarNewNames = [];
 Local $jarPath = [];
 
@@ -50,7 +51,7 @@ for $i=1 To UBound($allJars) - 1
    $jarFilePath = $name;
 
    ; MAKE NAME SHORTER
-   $name = StringReplace($name, $android_arr_dir, "");
+   $name = StringReplace($name, $cache_path, "");
    $name = StringReplace($name, $path, "");
    $name = StringReplace($name, "\jars\classes.jar", "");
    $name = StringReplace($name, "_output", "");
@@ -66,6 +67,7 @@ for $i=1 To UBound($allJars) - 1
    $name = StringReplace($name, "\", "_");
    $name = StringReplace($name, "/", "_");
    $name = StringReplace($name, "-", "_");
+   $name = StringReplace($name, "_", "");
    $name = $name&".jar";
    _ArrayAdd( $jarNewNames, $name);
    _ArrayAdd( $jarPath, $jarFilePath);
@@ -79,7 +81,7 @@ $platformFile = FileOpen(@ScriptDir & "\platform.xml", $FO_OVERWRITE);
 FileClose($platformFile);
 $platformFile = FileOpen(@ScriptDir & "\platform.xml",  $FO_APPEND);
 FileWrite($platformFile, "");
-FileWriteLine($platformFile, '<platform xmlns="http://ns.adobe.com/air/extension/'&$airSDKversion&'">');
+FileWriteLine($platformFile, '<platform xmlns="'&$air_namespace&'">');
 
 ; PACKAGE DEPENDENCIES
 ConsoleWrite("|"&@CRLF);
@@ -95,7 +97,7 @@ FileWriteLine($platformFile, "");
 ;PACKAGE RESOURCES
 FileWriteLine($platformFile, @TAB&'<packagedResources>');
 FileWriteLine($platformFile, @TAB&@TAB&'<packagedResource>');
-FileWriteLine($platformFile, @TAB&@TAB&@TAB&'<packageName>' & $main_package_name & '</packageName>');
+FileWriteLine($platformFile, @TAB&@TAB&@TAB&'<packageName>' & $ane_package_name & '</packageName>');
 FileWriteLine($platformFile, @TAB&@TAB&@TAB&'<folderName>res</folderName>');
 FileWriteLine($platformFile, @TAB&@TAB&'</packagedResource>');
 FileWriteLine($platformFile, "");
@@ -104,20 +106,24 @@ FileWriteLine($platformFile, "");
 ; FIND ALL RES REQUIRED FOR THE BUILD
 ConsoleWrite("|"&@CRLF);
 ConsoleWrite("|POPULATING LIBRARY RESOURCES AND PACKAGES" & @CRLF);
-$allJars = _FileListToArrayRec($full_path, "", $FLTAR_FILESFOLDERS , $FLTAR_RECUR, $FLTAR_SORT, $FLTAR_FULLPATH);
+$allJars = _FileListToArrayRec($cache_path, "", $FLTAR_FILESFOLDERS , $FLTAR_RECUR, $FLTAR_SORT, $FLTAR_FULLPATH);
 Local $resFolders =[];
 Local $resFolderNames =[];
 for $i=1 To UBound($allJars) - 1
    $name = $allJars[$i];
    $res = StringRight($name, 4);
+   ;ConsoleWrite($name&@CRLF);
+
    ; CHECK IF FOLDER IS A RESOURCE FOLDER
-   if $res == 'res\' Then
+   if $res == '\res' Then
 	  ; CHECK IF RESOURCE FOLDER CONTAINS ANY FILE
 	  $tempArr =_FileListToArray($name);
+	  ;ConsoleWrite($name&' : '& UBound($tempArr) &' files'&@CRLF);
+
 	  if  UBound($tempArr) > 1 Then
 		 _ArrayAdd($resFolders, $name);
 		 $resdirname = $name;
-		 $resdirname = StringReplace($resdirname, $android_arr_dir, "");
+		 $resdirname = StringReplace($resdirname, $cache_path, "");
 		 $resdirname = StringReplace($resdirname, $path, "");
 		 $resdirname = StringReplace($resdirname, "com.", "");
 		 $resdirname = StringReplace($resdirname, "android", "");
@@ -128,8 +134,8 @@ for $i=1 To UBound($allJars) - 1
 		 $resdirname = StringReplace($resdirname, "\", "");
 		 $resdirname = StringReplace($resdirname, "/", "");
 		 $resdirname = StringReplace($resdirname, "-", "");
-
-		 _ArrayAdd($resFolderNames, $name);
+		 $resdirname = StringReplace($resdirname, "_", "");
+		 ;ConsoleWrite($resdirname&@CRLF);
 
 		 ; CREATE RESH DIRECTORY
 		 DirCreate(@ScriptDir & "\temp\android\"&$resdirname);
@@ -139,8 +145,9 @@ for $i=1 To UBound($allJars) - 1
 
 		 ;  FIND WHAT IS THE PACKAGE NAME OF THE FILE
 		 $manifestFilePath = $name;
+		 ;ConsoleWrite($name&@CRLF);
 		 $manifestFilePath = StringLeft($manifestFilePath, StringLen($manifestFilePath) - 4);
-		 $manifestFilePath = $manifestFilePath & "AndroidManifest.xml";
+		 $manifestFilePath = $manifestFilePath & "\AndroidManifest.xml";
 		 $manifestFile = FileOpen($manifestFilePath, $FO_READ);
 		 $lineResult = FileReadLine($manifestFile);
 		 $pos = -1;
