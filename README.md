@@ -6,7 +6,8 @@ tested using the latest Android SDK, Gradle 3.3, JDK 1.8, AIR ascsdk 26.
 Required tool
 1. AIR sdk, Android studio + Android SDK
 2. apache ANT, needs to be in your system variable path
-3. AutoIt
+3. Java development kit, i've tested jdk 1.8 and it is working fine for the latest ascsdk
+4. AutoIt
 
 How to build your ANE with android studio
 1. follow the instruction from here  http://www.myflashlabs.com/build-ane-android-studio/
